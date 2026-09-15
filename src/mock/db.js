@@ -1,18 +1,21 @@
 import { estimateReadingMinutes } from '../lib/format.js';
+import { loadFilePosts } from '../lib/content.js';
 
 /* ============================================================================
-   mock/db.js —— 全站唯一数据源（当前为「全新博客」状态：没有任何文章）
+   mock/db.js —— 全站唯一数据源
    页面不得散落硬编码数据，一律通过 src/api 读取本文件。
    数据结构即未来真实后端的返回结构（见 src/api/index.js 的接口注释）。
 
-   怎么开始写第一篇：
-   1) 往下面的 posts 数组里追加一个对象（字段见文末的示例注释）；
-   2) 如果属于某个连载，先在 seriesList 里加一条，再用 seriesId 关联；
-   3) tags / stats / 各页面的进度条都会自动跟着算，不需要手改别的地方。
-   ============================================================================ */
+   文章从哪来：
+     文章不再是写死在本文件里的数组，而是 src/content/posts/ 下的 .md 文件，
+     由 lib/content.js 在构建时读入（frontmatter 提供元数据，正文是 markdown）。
+     加一篇 = 丢一个 .md 文件进那个目录；改一篇 = 改那个文件。
+     写作台（#/studio）负责帮你生成格式正确的 .md。
 
-/** 把多行文本拼成 markdown 字符串（避免模板字符串里反引号的转义噪音） */
-const C = (...lines) => lines.join('\n');
+   连载系列：
+     仍然在本文件的 seriesList 里声明。文章的 frontmatter 里写 series 字段
+     （系列 id 或 slug 都可以），关联关系会自动建立。
+   ============================================================================ */
 
 /* ------------------------------ 作者信息 ------------------------------ */
 /* 注意：以下都是占位值，请按自己的情况替换 */
@@ -35,8 +38,9 @@ export const profile = {
 export const seriesList = [];
 
 /* ------------------------------ 文章 ------------------------------ */
-/* 目前为空。追加对象时请保持字段完整，否则页面上的部分信息会缺省。 */
-export const posts = [];
+/* 来自 src/content/posts/*.md（构建时读入，见 lib/content.js）。
+   要写新文章请用 #/studio 写作台生成 .md，而不是改这个文件。 */
+export const posts = loadFilePosts();
 
 /* ------------------------------ 派生数据（不需要手改） ------------------------------ */
 
@@ -54,7 +58,9 @@ export const tags = (() => {
 
 /** 每篇文章补齐派生字段：阅读时长、系列信息 */
 export const postsWithMeta = posts.map((p) => {
-  const s = seriesList.find((x) => x.id === p.seriesId) || null;
+  // frontmatter 里 series 写 id 或 slug 都能对上
+  const s =
+    seriesList.find((x) => x.id === p.seriesId || x.slug === p.seriesId) || null;
   return {
     ...p,
     readingMinutes: p.content ? estimateReadingMinutes(p.content) : 0,
@@ -92,9 +98,8 @@ export const stats = {
 export const tickerItems = [];
 
 /* ============================================================================
-   追加文章时的字段模板（复制到上面的 posts 数组里即可）：
+   连载系列（可选）—— 还是要写在本文件里，字段模板：
 
-   1) 系列（可选）—— 先加进 seriesList：
    {
      id: 's_core',
      slug: 'core',                       // 用于 /series#core 锚点
@@ -107,26 +112,9 @@ export const tickerItems = [];
      startedAt: '2026-09-15',
    }
 
-   2) 文章：
-   {
-     id: 'p_001',
-     slug: 'my-first-post',              // URL: /posts/my-first-post
-     title: '标题',
-     dek: '一两句话的摘要，会出现在列表与详情页导语。',
-     seriesId: 's_core',                 // 不属于任何系列就写 null
-     seriesOrder: 1,                     // 系列内序号
-     tags: ['ReAct', '基础'],
-     publishedAt: '2026-09-20',          // 未发布写 null
-     updatedAt: '2026-09-20',
-     views: 0,
-     likes: 0,
-     featured: false,                    // true 会出现在首页「编辑精选」
-     status: 'published',                // published | draft | planned
-     cover: { from: '#FF4D2E', to: '#8C2109', pattern: 'grid' },  // grid|dots|lines|cross
-     content: C(
-       '## 小标题',
-       '',
-       '正文段落。支持 h2/h3、列表、``` 代码块、引用、表格、**粗体**、`行内代码`。',
-     ),
-   }
+   加进 seriesList 之后，文章的 frontmatter 里写 series: core 即可关联
+   （写 id `s_core` 也行，两种都能对上）。
+
+   文章本身请去 src/content/posts/ 里写，或打开 #/studio 用写作台生成。
+   现成的空模板在 src/content/posts/_template.md，复制改名即可。
    ============================================================================ */
