@@ -1,0 +1,164 @@
+/* ============================================================
+   Design Tokens — agent-blog
+   全站唯一事实来源：任何页面/组件只允许使用本文件中的变量
+   Aesthetic: Signal Terminal / Editorial-Brutalist
+   ============================================================ */
+
+:root {
+  /* ---------- 字体 ---------- */
+  --font-display: "Space Grotesk Variable", "PingFang SC", "HarmonyOS Sans SC",
+    "Source Han Sans SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --font-body: "Space Grotesk Variable", "PingFang SC", "HarmonyOS Sans SC",
+    "Source Han Sans SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Consolas,
+    "Liberation Mono", monospace;
+
+  /* ---------- 字号 ---------- */
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-16: 16px;
+  --fs-18: 18px;
+  --fs-22: 22px;
+  --fs-28: 28px;
+  --fs-38: 38px;
+  --fs-52: 52px;
+  --fs-72: 72px;
+
+  /* ---------- 间距（4px 基数） ---------- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+  --sp-24: 96px;
+
+  /* ---------- 圆角 ---------- */
+  --r-xs: 4px;
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-pill: 999px;
+
+  /* ---------- 布局 ---------- */
+  --sidebar-w: 248px;
+  --topbar-h: 62px;
+  --content-max: 1180px;
+  --measure: 68ch;
+  --gutter: var(--sp-6);
+
+  /* ---------- 动效 ---------- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 0.16s;
+  --dur-base: 0.28s;
+  --dur-slow: 0.5s;
+
+  /* ---------- 层级 ---------- */
+  --z-bg: -1;
+  --z-base: 1;
+  --z-sticky: 30;
+  --z-header: 40;
+  --z-overlay: 80;
+  --z-toast: 100;
+}
+
+/* ============================================================
+   深色主题（默认）
+   ============================================================ */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #08090b;
+  --bg-veil: rgba(8, 9, 11, 0.72);
+  --surface: #0e1013;
+  --surface-2: #14161a;
+  --surface-3: #1a1d22;
+  --surface-hover: #191c21;
+
+  --border: #23262d;
+  --border-strong: #343841;
+
+  --text: #edeef0;
+  --text-sub: #9ba1ab;
+  --text-dim: #6b7280;
+
+  --accent: #ff4d2e;
+  --accent-hover: #ff6a4d;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(255, 77, 46, 0.12);
+  --accent-line: rgba(255, 77, 46, 0.4);
+
+  --accent-2: #4adec0;
+  --accent-2-soft: rgba(74, 222, 192, 0.12);
+  --accent-2-line: rgba(74, 222, 192, 0.35);
+
+  --success: #3fb950;
+  --warning: #d8a22b;
+  --danger: #f05252;
+
+  --glow-a: rgba(255, 77, 46, 0.13);
+  --glow-b: rgba(74, 222, 192, 0.09);
+  --grid-line: rgba(255, 255, 255, 0.032);
+  --grain-opacity: 0.05;
+  --scrim: rgba(4, 5, 7, 0.66);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 10px 30px -16px rgba(0, 0, 0, 0.75);
+  --shadow-lg: 0 32px 70px -32px rgba(0, 0, 0, 0.85);
+  --ring: 0 0 0 2px rgba(255, 77, 46, 0.28);
+}
+
+/* ============================================================
+   浅色主题（暖纸白）
+   ============================================================ */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #f4f2ed;
+  --bg-veil: rgba(244, 242, 237, 0.78);
+  --surface: #ffffff;
+  --surface-2: #faf9f6;
+  --surface-3: #f0ede6;
+  --surface-hover: #f6f4ef;
+
+  --border: #e3dfd6;
+  --border-strong: #cdc7ba;
+
+  --text: #14161a;
+  --text-sub: #5c6270;
+  --text-dim: #8a8f9a;
+
+  --accent: #e33c1c;
+  --accent-hover: #c9300f;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(227, 60, 28, 0.1);
+  --accent-line: rgba(227, 60, 28, 0.36);
+
+  --accent-2: #0f9c86;
+  --accent-2-soft: rgba(15, 156, 134, 0.1);
+  --accent-2-line: rgba(15, 156, 134, 0.32);
+
+  --success: #1f8b3c;
+  --warning: #9c7411;
+  --danger: #c53434;
+
+  --glow-a: rgba(227, 60, 28, 0.09);
+  --glow-b: rgba(15, 156, 134, 0.07);
+  --grid-line: rgba(20, 22, 26, 0.045);
+  --grain-opacity: 0.035;
+  --scrim: rgba(28, 26, 22, 0.42);
+
+  --shadow-sm: 0 1px 2px rgba(28, 26, 22, 0.06);
+  --shadow-md: 0 10px 28px -18px rgba(28, 26, 22, 0.35);
+  --shadow-lg: 0 30px 60px -30px rgba(28, 26, 22, 0.35);
+  --ring: 0 0 0 2px rgba(227, 60, 28, 0.22);
+}

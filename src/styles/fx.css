@@ -1,0 +1,1067 @@
+/* ============================================================================
+   fx.css —— 交互动效层（氛围 / 光标 / 文字 / 卡片 / 滚动 / 3D / 转场）
+   只使用 tokens.css 中的变量；只动 transform 与 opacity；
+   backdrop-blur 仅用于 fixed / sticky 元素。
+   ============================================================================ */
+
+/* ------------------------------ 氛围层 Atmosphere ------------------------------ */
+.atmo {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  contain: strict;
+}
+
+/* 极光：多层径向渐变 + 大范围模糊，缓慢漂移 */
+.atmo__aurora,
+.atmo__aurora--b {
+  position: absolute;
+  inset: -28%;
+  will-change: transform;
+}
+
+.atmo__aurora {
+  background: radial-gradient(40% 36% at 16% 10%, var(--glow-a) 0%, transparent 68%),
+    radial-gradient(36% 32% at 86% 18%, var(--glow-b) 0%, transparent 70%);
+  filter: blur(54px);
+  animation: atmo-drift 38s var(--ease-in-out) infinite alternate;
+}
+
+.atmo__aurora--b {
+  background: radial-gradient(44% 38% at 58% 92%, var(--glow-a) 0%, transparent 72%),
+    radial-gradient(30% 28% at 28% 74%, var(--glow-b) 0%, transparent 74%);
+  filter: blur(64px);
+  opacity: 0.9;
+  animation: atmo-drift-b 46s var(--ease-in-out) infinite alternate;
+}
+
+/* 呼吸球：少量、低透明度的光斑，提供纵深 */
+.atmo__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+  opacity: 0.5;
+  will-change: transform;
+}
+
+.atmo__orb--1 {
+  width: 300px;
+  height: 300px;
+  left: 6%;
+  top: 22%;
+  background: var(--accent-soft);
+  animation: orb-float 22s var(--ease-in-out) infinite alternate;
+}
+
+.atmo__orb--2 {
+  width: 260px;
+  height: 260px;
+  right: 12%;
+  top: 58%;
+  background: var(--accent-2-soft);
+  animation: orb-float 27s var(--ease-in-out) infinite alternate-reverse;
+}
+
+/* 网格：底层极淡常驻 + 随光标点亮的第二层 */
+.atmo__grid,
+.atmo__grid--live {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.atmo__grid {
+  mask-image: radial-gradient(ellipse 92% 72% at 50% 0%, #000 4%, transparent 76%);
+  -webkit-mask-image: radial-gradient(ellipse 92% 72% at 50% 0%, #000 4%, transparent 76%);
+  animation: grid-drift 30s linear infinite;
+}
+
+.atmo__grid--live {
+  background-size: 64px 64px;
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+  /* 只有光标附近的网格线被点亮 */
+  mask-image: radial-gradient(
+    260px circle at var(--gx, -20%) var(--gy, -20%),
+    #000 0%,
+    transparent 72%
+  );
+  -webkit-mask-image: radial-gradient(
+    260px circle at var(--gx, -20%) var(--gy, -20%),
+    #000 0%,
+    transparent 72%
+  );
+  background-image: linear-gradient(var(--accent-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--accent-line) 1px, transparent 1px);
+}
+
+.atmo.is-pointer .atmo__grid--live {
+  opacity: 0.55;
+}
+
+/* 顶部锥形光斑 */
+.atmo__spot {
+  position: absolute;
+  left: 50%;
+  top: -34%;
+  width: 128%;
+  height: 78%;
+  translate: -50% 0;
+  background: conic-gradient(
+    from 180deg at 50% 0%,
+    transparent 34%,
+    var(--accent-soft) 50%,
+    transparent 66%
+  );
+  filter: blur(58px);
+  opacity: 0.7;
+  animation: spot-sway 20s var(--ease-in-out) infinite alternate;
+}
+
+/* 噪点：只铺一层，乘性混合 */
+.atmo__noise {
+  position: absolute;
+  inset: 0;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* 流星：桌面 ≤ 12 条，移动端由 JS 降到 4 条 */
+.atmo__meteors {
+  position: absolute;
+  inset: 0;
+}
+
+.meteor {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: meteor-fall 6s linear infinite;
+  will-change: transform, opacity;
+}
+
+.meteor::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 72px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+}
+
+.meteor--teal {
+  background: var(--accent-2);
+}
+
+.meteor--teal::before {
+  background: linear-gradient(90deg, var(--accent-2), transparent);
+}
+
+/* ------------------------------ 边缘渐隐 ------------------------------ */
+.fx-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--sp-16);
+  pointer-events: none;
+  z-index: var(--z-sticky);
+}
+
+.fx-fade--top {
+  top: 0;
+  background: linear-gradient(to bottom, var(--bg), transparent);
+}
+
+.fx-fade--bottom {
+  bottom: 0;
+  background: linear-gradient(to top, var(--bg), transparent);
+}
+
+/* ------------------------------ 自定义光标 ------------------------------ */
+.fx-cursor,
+.fx-cursor__ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 96;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.fx-cursor {
+  mix-blend-mode: difference;
+}
+
+.fx-cursor__dot {
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.fx-cursor__ring {
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 50%;
+  mix-blend-mode: difference;
+  transition: width var(--dur-base) var(--ease-out), height var(--dur-base) var(--ease-out),
+    margin var(--dur-base) var(--ease-out), background-color var(--dur-base) var(--ease-out);
+}
+
+.fx-cursor__ring.is-hover {
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* 自定义光标启用时隐藏系统光标，但输入区域必须还原 */
+body.has-fx-cursor,
+body.has-fx-cursor * {
+  cursor: none;
+}
+
+body.has-fx-cursor input,
+body.has-fx-cursor textarea,
+body.has-fx-cursor select,
+body.has-fx-cursor [contenteditable='true'],
+body.has-fx-cursor [data-cursor='native'] {
+  cursor: auto;
+}
+
+/* ------------------------------ 文字动效 ------------------------------ */
+.txt-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+
+.txt-mask__inner {
+  display: inline-block;
+  will-change: transform;
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    100deg,
+    var(--text-dim) 26%,
+    var(--text) 48%,
+    var(--text-dim) 72%
+  );
+  background-size: 240% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer-x 3.6s linear infinite;
+}
+
+.hyper {
+  display: inline-block;
+  font-variant-ligatures: none;
+}
+
+.ticker {
+  font-variant-numeric: tabular-nums;
+}
+
+.flipwords {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.flipwords__word {
+  display: inline-block;
+  color: var(--accent);
+}
+
+/* ------------------------------ 卡片动效 ------------------------------ */
+.tilt {
+  perspective: 900px;
+}
+
+.tilt__inner {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.tilt__raise {
+  transform: translateZ(26px);
+}
+
+.shine-border {
+  position: relative;
+  padding: 1px;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.shine-border::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 200%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 60%,
+    var(--accent) 76%,
+    var(--accent-2) 82%,
+    transparent 94%
+  );
+  animation: shine-spin 7s linear infinite;
+  will-change: rotate;
+}
+
+.shine-border__core {
+  position: relative;
+  border-radius: calc(var(--r-md) - 1px);
+  background: var(--surface);
+  height: 100%;
+}
+
+.glare {
+  position: relative;
+  overflow: hidden;
+}
+
+.glare::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: -80%;
+  width: 55%;
+  height: 220%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    color-mix(in srgb, var(--text) 12%, transparent),
+    transparent
+  );
+  transform: rotate(16deg);
+  transition: left 0.75s var(--ease-out);
+  pointer-events: none;
+}
+
+.glare:hover::after {
+  left: 130%;
+}
+
+/* Bento 网格：桌面 6 列，移动端单列 */
+.bento {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+.bento__item {
+  grid-column: span 3;
+  min-width: 0;
+}
+
+.bento__item--half {
+  grid-column: span 3;
+}
+
+.bento__item--wide {
+  grid-column: span 4;
+}
+
+.bento__item--narrow {
+  grid-column: span 2;
+}
+
+.bento__item--full {
+  grid-column: span 6;
+}
+
+@media (max-width: 900px) {
+  .bento {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .bento__item,
+  .bento__item--half,
+  .bento__item--wide,
+  .bento__item--narrow,
+  .bento__item--full {
+    grid-column: span 1;
+  }
+}
+
+/* ------------------------------ 滚动驱动 ------------------------------ */
+.beam-track {
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+  overflow: hidden;
+  border-radius: var(--r-pill);
+}
+
+.beam-track__fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 0;
+  background: linear-gradient(to bottom, var(--accent), var(--accent-2));
+}
+
+.scroll-rail {
+  position: fixed;
+  right: var(--sp-5);
+  top: 50%;
+  translate: 0 -50%;
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.scroll-rail__dot {
+  display: block;
+  width: 26px;
+  height: 2px;
+  border-radius: var(--r-pill);
+  background: var(--border-strong);
+  transition: width var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out);
+}
+
+.scroll-rail__dot:hover {
+  background: var(--text-dim);
+}
+
+.scroll-rail__dot.is-active {
+  width: 44px;
+  background: var(--accent);
+}
+
+@media (max-width: 1120px) {
+  .scroll-rail {
+    display: none;
+  }
+}
+
+/* 滚动速度驱动跑马灯 */
+.sv-row {
+  overflow: hidden;
+  padding: var(--sp-2) 0;
+}
+
+.sv-row__track {
+  display: flex;
+  width: max-content;
+  gap: var(--sp-8);
+  will-change: transform;
+}
+
+.sv-row__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-4);
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4.4vw, 60px);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--border-strong);
+  white-space: nowrap;
+}
+
+.sv-row__item--solid {
+  color: var(--text);
+  -webkit-text-stroke: 0;
+}
+
+/* sticky 滚动叙事 */
+.sticky-scroll {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: var(--sp-12);
+  align-items: start;
+}
+
+.sticky-scroll__aside {
+  position: sticky;
+  top: calc(var(--topbar-h) + var(--sp-10));
+}
+
+.sticky-scroll__step {
+  display: flex;
+  gap: var(--sp-4);
+  padding: var(--sp-4) 0;
+  border-left: 1px solid var(--border);
+  padding-left: var(--sp-5);
+  color: var(--text-dim);
+  transition: color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.sticky-scroll__step.is-active {
+  color: var(--text);
+  border-left-color: var(--accent);
+}
+
+.sticky-scroll__panel {
+  min-height: 46vh;
+}
+
+@media (max-width: 900px) {
+  .sticky-scroll {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-8);
+  }
+  .sticky-scroll__aside {
+    position: static;
+  }
+  .sticky-scroll__panel {
+    min-height: 0;
+  }
+}
+
+/* 滚动翻出：带透视的容器 */
+.container-scroll {
+  perspective: 1200px;
+}
+
+.container-scroll__inner {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* ------------------------------ Dock 放大 ------------------------------ */
+.dock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dock__item {
+  transform-origin: left center;
+  will-change: transform;
+}
+
+/* ------------------------------ 按钮：岛式结构 ------------------------------ */
+.btn--island {
+  border-radius: var(--r-pill);
+  padding-right: var(--sp-2);
+  gap: var(--sp-3);
+}
+
+.btn__circle {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  transition: transform var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out);
+}
+
+.btn--ghost .btn__circle {
+  background: var(--surface-3);
+}
+
+.btn--island:hover .btn__circle {
+  transform: translate(2px, -1px) scale(1.06);
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.btn--ghost.btn--island:hover .btn__circle {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ------------------------------ 排版增强 ------------------------------ */
+.display-hero {
+  font-size: clamp(40px, 8.2vw, 104px);
+  font-weight: 600;
+  line-height: 0.98;
+  letter-spacing: -0.038em;
+}
+
+.eyebrow--rule {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.eyebrow--rule::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.eyebrow__index {
+  color: var(--accent);
+}
+
+/* 区块节奏：桌面 96px，移动端 56px */
+.section--lg {
+  margin-top: var(--sp-24);
+}
+
+@media (max-width: 768px) {
+  .section--lg {
+    margin-top: var(--sp-16);
+  }
+}
+
+/* ------------------------------ 3D 层 ------------------------------ */
+.hero3d {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.hero3d canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hero3d--fallback {
+  background: radial-gradient(46% 42% at 68% 38%, var(--accent-soft) 0%, transparent 68%),
+    radial-gradient(38% 36% at 30% 66%, var(--accent-2-soft) 0%, transparent 70%);
+}
+
+/* ------------------------------ 路由转场 ------------------------------ */
+.fx-wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  pointer-events: none;
+}
+
+.fx-wipe__panel {
+  flex: 1;
+  height: 100%;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.fx-wipe__panel--a {
+  background: var(--surface-3);
+}
+
+.fx-wipe__panel--b {
+  background: var(--accent);
+}
+
+/* ------------------------------ 背景换气带 ------------------------------ */
+/* 作为 hero 底部的背景纹理层：absolute + 左右渐隐，不占布局高度。
+   位置刻意压在「左列内容下方 / 右列卡片下方」的留白里，
+   不再与标题、导语发生重叠（那是之前视觉混乱的主因）。
+   下方紧邻的区块需 position:relative; z-index:1 才能确保压住它。 */
+.tape {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  translate: 0 56%;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.4;
+}
+
+.tape .sv-row {
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+
+.tape .sv-row__item {
+  font-size: clamp(20px, 2.9vw, 42px);
+}
+
+@media (max-width: 900px) {
+  .tape {
+    opacity: 0.2;
+  }
+}
+
+/* 右列卡片统一向右出血一点，视觉体量更大（body 已 overflow-x: hidden） */
+@media (min-width: 1024px) {
+  .bleed-right {
+    margin-right: calc(-1 * var(--sp-8));
+    margin-left: calc(-1 * var(--sp-2));
+  }
+}
+
+/* ------------------------------ Agent 执行链路图 ------------------------------ */
+.agx {
+  overflow: hidden;
+}
+
+.agx__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.agx__dot {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: var(--accent-2);
+}
+
+.agx__dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-2);
+  animation: pulse-ring 2.4s var(--ease-out) infinite;
+}
+
+.agx__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: var(--sp-4) 0 var(--sp-2);
+}
+
+.agx__edge {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.agx__flow {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 4 16;
+  animation: agx-flow 1.5s linear infinite;
+}
+
+.agx__flow--accent {
+  stroke: var(--accent);
+}
+
+.agx__flow--teal {
+  stroke: var(--accent-2);
+}
+
+.agx__node {
+  fill: var(--bg);
+  stroke: var(--border-strong);
+  stroke-width: 1.2;
+}
+
+.agx__node--accent {
+  stroke: var(--accent);
+  fill: var(--accent);
+}
+
+.agx__node--teal {
+  stroke: var(--accent-2);
+  fill: var(--accent-2);
+}
+
+.agx__pulse {
+  fill: none;
+  stroke: var(--accent-line);
+  stroke-width: 1;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: agx-pulse 3.4s var(--ease-out) infinite;
+}
+
+.agx__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  dominant-baseline: middle;
+  fill: var(--text-sub);
+}
+
+.agx__label--accent {
+  fill: var(--accent);
+}
+
+.agx__label--teal {
+  fill: var(--accent-2);
+}
+
+.agx__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px dashed var(--border);
+}
+
+.agx__stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.agx__stat b {
+  font-family: var(--font-display);
+  font-size: var(--fs-14);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--text);
+}
+
+/* ------------------------------ 分段控件：共享布局指示条 ------------------------------ */
+/* 用法：在 .seg 里给当前选中的 .seg__btn 内部渲染
+   <motion.span layoutId="seg-ink" className="seg__ink" /> */
+.seg {
+  position: relative;
+}
+
+.seg__btn {
+  position: relative;
+  isolation: isolate;
+}
+
+.seg__btn.is-active {
+  background: transparent;
+}
+
+.seg__ink {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 6px;
+  background: var(--surface-3);
+}
+
+/* ------------------------------ 吸顶工具栏 ------------------------------ */
+.sticky-toolbar {
+  position: sticky;
+  top: var(--topbar-h);
+  z-index: var(--z-sticky);
+  padding: var(--sp-3) 0;
+  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ------------------------------ 故障文字（404 用） ------------------------------ */
+.glitch {
+  position: relative;
+  display: inline-block;
+}
+
+.glitch__layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.glitch__layer--a {
+  color: var(--accent);
+  animation: glitch-a 3.4s steps(2, end) infinite;
+  opacity: 0.85;
+}
+
+.glitch__layer--b {
+  color: var(--accent-2);
+  animation: glitch-b 3.9s steps(2, end) infinite;
+  opacity: 0.7;
+}
+
+.glitch__core {
+  position: relative;
+}
+
+/* ------------------------------ 关键帧 ------------------------------ */
+@keyframes atmo-drift {
+  0% {
+    transform: translate3d(-3%, -2%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(3%, 2%, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-2%, 3%, 0) scale(1.03);
+  }
+}
+
+@keyframes atmo-drift-b {
+  0% {
+    transform: translate3d(2%, 3%, 0) scale(1.05);
+  }
+  50% {
+    transform: translate3d(-3%, -2%, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(3%, -3%, 0) scale(1.09);
+  }
+}
+
+@keyframes orb-float {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(28px, -34px, 0) scale(1.14);
+  }
+}
+
+@keyframes spot-sway {
+  0% {
+    transform: translateX(-50%) rotate(-6deg) scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateX(-50%) rotate(6deg) scale(1.06);
+    opacity: 0.85;
+  }
+}
+
+@keyframes meteor-fall {
+  0% {
+    transform: rotate(215deg) translateX(0);
+    opacity: 1;
+  }
+  68% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(215deg) translateX(-560px);
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer-x {
+  0% {
+    background-position: 160% 0;
+  }
+  100% {
+    background-position: -60% 0;
+  }
+}
+
+@keyframes shine-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes glitch-a {
+  0%,
+  90%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  92% {
+    transform: translate3d(-4px, 2px, 0);
+  }
+  95% {
+    transform: translate3d(3px, -2px, 0);
+  }
+  97% {
+    transform: translate3d(-2px, -1px, 0);
+  }
+}
+
+@keyframes glitch-b {
+  0%,
+  88%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  90% {
+    transform: translate3d(4px, -2px, 0);
+  }
+  94% {
+    transform: translate3d(-3px, 2px, 0);
+  }
+  98% {
+    transform: translate3d(2px, 1px, 0);
+  }
+}
+
+@keyframes agx-flow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+@keyframes agx-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(3.4);
+    opacity: 0;
+  }
+}
+
+/* ------------------------------ 打印 / 降级 ------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .atmo__aurora,
+  .atmo__aurora--b,
+  .atmo__orb,
+  .atmo__spot,
+  .atmo__grid,
+  .meteor,
+  .shimmer-text,
+  .shine-border::before {
+    animation: none !important;
+  }
+  .fx-cursor,
+  .fx-cursor__ring {
+    display: none !important;
+  }
+  .atmo__grid--live {
+    opacity: 0 !important;
+  }
+  .agx__flow,
+  .agx__pulse,
+  .agx__dot::after {
+    animation: none !important;
+  }
+  .agx__pulse {
+    opacity: 0;
+  }
+}
