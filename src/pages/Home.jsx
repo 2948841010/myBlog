@@ -46,9 +46,9 @@ import { Hero3DLazy } from '../components/fx/Hero3DLazy.jsx';
  *  放在组件外是必须的 —— TypedTerminal 的 useEffect 依赖 lines 的引用，
  *  写成内联数组会导致每次父组件重渲染都重新打字。 */
 const TERMINAL_LINES = [
-  { cmd: 'agent eval --suite regression', out: '[ok] 1,200 cases · pass 89.2% · 14m02s' },
-  { cmd: 'agent trace --last 50 --only failures', out: '3 tool_error · 1 timeout · p95 2.4s' },
-  { cmd: 'agent deploy --canary 5% --watch', out: '[ok] 灰度通过 · 已放量 100% · 可一键回滚' },
+  { cmd: 'whoami', out: 'zcy · 刚开始写 Agent 笔记' },
+  { cmd: 'ls notes/', out: '空的，第一篇还在写' },
+  { cmd: 'agent notes new', out: 'waiting for input…' },
 ];
 
 /** 换气带短词：ScrollVelocityText 用超大字号，只能放短词。
@@ -175,7 +175,7 @@ export default function Home() {
               <div className="terminal-wrap bleed-right float-slow">
                 <span className="terminal-wrap__halo" aria-hidden="true" />
                 <TypedTerminal
-                  title="zsh — linwei@agent-core"
+                  title="zsh — zcy@agent-notes"
                   lines={TERMINAL_LINES}
                   loop
                   holdMs={3600}

@@ -9,7 +9,7 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  * @param {{title?: string, children: any, className?: string, ref?: any}} props
  */
 export function Terminal({
-  title = 'bash — linwei@agent-dev',
+  title = 'bash — zcy@agent-notes',
   children,
   className = '',
   ref,
